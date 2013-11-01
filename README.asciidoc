@@ -1,0 +1,52 @@
+= git-reintegration =
+
+This tool allows the regeneration of integration branches.
+
+If you already have an integration branch, like git.git's pu, you can
+automatically generate the integration insructions:
+
+------------
+git clone https://github.com/gitster/git/
+cd git
+git fetch -u origin 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*'
+git checkout pu
+git reintegrate --generate pu master
+git reintegrate --cat
+------------
+
+Which would generate something like:
+
+------------
+base master
+merge jl/submodule-mv
+
+  Moving a regular file in a repository with a .gitmodules file was
+  producing a warning 'Could not find section in .gitmodules where
+  path=<filename>'.
+
+merge ap/remote-hg-unquote-cquote
+
+  A fast-import stream expresses a pathname with funny characters by
+  quoting them in C style; remote-hg remote helper forgot to unquote
+  such a path.
+
+------------
+
+You can edit the instructions with `git reintegrate --edit`.
+
+The simplest way to begin an integration branch is with:
+
+------------
+git reintegrate --create pu master
+git reintegrate --add=branch1 --add=branch2 --add=branch3
+------------
+
+To generate the integration branch run `git reintegrate --rebuild`, if there
+are merge conflicts, solve them and continue with `git reintegrate --continue`.
+
+== Acknowledgements ==
+
+This is a rewrite of John Keeping's `git integration` tool
+(https://github.com/johnkeeping/git-integration[link]) , that provides a
+one-to-one mapping of functionality, plus some extras. Also, it borrows ideas
+from git.git's integration scripts.
