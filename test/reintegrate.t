@@ -110,4 +110,32 @@ test_expect_success 'do not create empty commits' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup branches' '
+	git init -q tmp &&
+	test_when_finished "rm -rf tmp" &&
+	(
+	cd tmp &&
+	commit_file base base &&
+	git checkout -b branch1 master &&
+	commit_file branch1 branch1 &&
+	git checkout -b branch2 master &&
+	commit_file branch2 branch2 &&
+	git checkout -b branch3 master &&
+	commit_file branch3 branch3 &&
+	git checkout -b pu master &&
+	git merge --no-ff branch1 &&
+	git merge --no-ff branch2 &&
+	git merge --no-ff branch3 &&
+	git reintegrate --generate pu master &&
+	git reintegrate --cat > ../actual
+	) &&
+	cat > expected <<-EOF &&
+	base master
+	merge branch1
+	merge branch2
+	merge branch3
+	EOF
+	test_cmp expected actual
+'
+
 test_done

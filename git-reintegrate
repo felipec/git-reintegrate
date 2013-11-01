@@ -97,6 +97,30 @@ class ParseOpt
 
 end
 
+def parse_merge(other, commit, msg, body)
+  case msg
+  when /^Merge branch '(.*)'/
+    branch = $1
+    ref = 'refs/heads/' + $1
+  when /^Merge remote branch '(.*)'/
+    branch = $1
+    prefix = 'refs/'
+    ref = 'refs/' + $1
+  else
+    $stderr.puts "Huh?: #{msg}"
+    return
+  end
+
+  tip = %x[git name-rev --refs="#{ref}" 2> /dev/null].chomp
+  merged = %x[git name-rev --refs="#{ref}" "#{other}" 2> /dev/null].chomp
+  if merged =~ /\h{40} (.*)/
+    merged = $1
+  end
+  merged = "merge #{merged}"
+  merged += "\n\n" + body.gsub(/^/, '  ') unless body.empty?
+  merged
+end
+
 class Branch
 
   attr_reader :name, :ref, :int
@@ -138,6 +162,46 @@ class Branch
     write_instructions("base #{base}\n")
     system(*%w[git checkout], @name)
     puts "Integration branch #{@name} created."
+  end
+
+  def generate(base = nil)
+    if @name
+      @ref = %x[git rev-parse --symbolic-full-name "refs/heads/#{@name}"].chomp
+      die "no such branch: #{@name}" unless $?.success?
+    else
+      @ref = %x[git symbolic-ref HEAD].chomp
+      die "HEAD is detached, could not figure out which integration branch to use" unless $?.success?
+      @name = @ref.gsub(%r{^refs/heads/}, '')
+    end
+
+    if base
+      system(*%w[git rev-parse --quiet --verify], "#{base}^{commit}", :out => File::NULL)
+      die "no such commit: #{base}" unless $?.success?
+    else
+      base = 'master'
+    end
+
+    @int = @ref.gsub(%r{^refs/heads/}, 'refs/int/')
+
+    series = []
+
+    series << "base #{base}"
+
+    IO.popen(%w[git log --no-decorate --format=%H%n%B -z --reverse --first-parent] + ["^#{base}", @name]) do |io|
+      io.each("\0") do |l|
+        commit, summary, body = l.chomp("\0").split("\n", 3)
+        body.lstrip!
+        other = %x[git rev-parse -q --verify "#{commit}^2"].chomp
+        if not other.empty?
+          body.gsub!(/\n?(\* .*:.*\n.*)/m, '')
+          series << parse_merge(other, commit, summary, body)
+        end
+      end
+    end
+
+    write_instructions(series.join("\n"))
+
+    puts "Integration branch #{@name} generated."
   end
 
   def read_instructions
@@ -472,6 +536,10 @@ opts.on(nil, 'abort', 'abort an in-progress rebuild') do |v|
   $actions << :abort
 end
 
+opts.on('g', 'generate', 'generate instruction sheet') do |v|
+  $generate = true
+end
+
 opts.on('a', 'add', '') do |v|
   system(*%w[git rev-parse --quiet --verify], "#{v}^{commit}", :out => File::NULL)
   die "not a valid commit: #{v}" unless $?.success?
@@ -510,6 +578,8 @@ end
 $branch = Branch.new(ARGV[0])
 if $create
   $branch.create(ARGV[1])
+elsif $generate
+  $branch.generate(ARGV[1])
 else
   $branch.get
 end
