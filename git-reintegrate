@@ -483,6 +483,10 @@ opts.on(nil, 'autocontinue', '') do |v|
   $autocontinue = v
 end
 
+opts.on(nil, 'cat', '') do |v|
+  $cat = v
+end
+
 %x[git config --bool --get integration.autocontinue].chomp == "true" &&
 $autocontinue = true
 
@@ -512,6 +516,10 @@ end
 
 if $edit || ! $branches_to_add.empty?
   do_edit
+end
+
+if $cat
+  puts $branch.read_instructions
 end
 
 if $rebuild == nil && $need_rebuild == true
