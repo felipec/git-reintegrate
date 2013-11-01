@@ -8,6 +8,11 @@ def die(*args)
   exit 128
 end
 
+def git_editor(*args)
+  editor = %x[git var GIT_EDITOR].chomp
+  system(editor, *args)
+end
+
 class ParseOpt
   attr_writer :usage
 
@@ -171,6 +176,39 @@ class Branch
 
 end
 
+def do_edit
+  ref = $branch.int
+  branch = $branch.ref
+
+  edit_file = "#{$git_dir}/GIT-INTEGRATION"
+
+  content = $branch.read_instructions
+  comment = <<EOF
+
+Format:
+ command: args
+
+    Indented lines form a comment for certain commands.
+    For other commands these are ignored.
+
+Lines beginning with $comment_char are stripped.
+
+Commands:
+ base		Resets the branch to the specified state.  Every integration
+		instruction list should begin with a "base" command.
+ merge		Merges the specified branch.  Extended comment lines are
+		added to the commit message for the merge.
+ .		The command is ignored.
+EOF
+  File.write(edit_file, content + "\n" + comment.gsub(/^/, '# \1'))
+
+  git_editor(edit_file) || die
+
+  content = File.read(edit_file).gsub(/^# .*?\n/m, '')
+
+  $branch.write_instructions(content)
+end
+
 opts = ParseOpt.new
 opts.usage = 'git reintegrate'
 
@@ -178,11 +216,21 @@ opts.on('c', 'create', 'create a new integration branch') do |v|
   $create = true
 end
 
+opts.on('e', 'edit', 'edit the instruction sheet for a branch') do |v|
+  $edit = true
+end
+
 opts.parse
+
+$git_dir = %x[git rev-parse --git-dir].chomp
 
 $branch = Branch.new(ARGV[0])
 if $create
   $branch.create(ARGV[1])
 else
   $branch.get
+end
+
+if $edit
+  do_edit
 end
