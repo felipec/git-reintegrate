@@ -6,6 +6,7 @@ $merged = []
 $actions = []
 
 $need_rebuild = false
+$branches_to_add = []
 
 NULL_SHA1 = '0' * 40
 
@@ -280,6 +281,9 @@ def do_edit
   edit_file = "#{$git_dir}/GIT-INTEGRATION"
 
   content = $branch.read_instructions
+  if not $branches_to_add.empty?
+    content += "\n" + $branches_to_add.map { |e| "merge #{e}" }.join("\n") + "\n"
+  end
   comment = <<EOF
 
 Format:
@@ -299,7 +303,9 @@ Commands:
 EOF
   File.write(edit_file, content + "\n" + comment.gsub(/^/, '# \1'))
 
-  git_editor(edit_file) || die
+  if $edit
+    git_editor(edit_file) || die
+  end
 
   content = File.read(edit_file).gsub(/^# .*?\n/m, '')
 
@@ -460,6 +466,13 @@ opts.on(nil, 'abort', 'abort an in-progress rebuild') do |v|
   $actions << :abort
 end
 
+opts.on('a', 'add', '') do |v|
+  system(*%w[git rev-parse --quiet --verify], "#{v}^{commit}", :out => File::NULL)
+  die "not a valid commit: #{v}" unless $?.success?
+  $branches_to_add << v
+  $need_rebuild = true
+end
+
 opts.parse
 
 $git_dir = %x[git rev-parse --git-dir].chomp
@@ -484,7 +497,7 @@ else
   $branch.get
 end
 
-if $edit
+if $edit || ! $branches_to_add.empty?
   do_edit
 end
 
