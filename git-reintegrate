@@ -7,6 +7,7 @@ $actions = []
 
 $need_rebuild = false
 $branches_to_add = []
+$autocontinue = false
 
 NULL_SHA1 = '0' * 40
 
@@ -335,7 +336,12 @@ def cmd_merge(message, branch_to_merge, *args)
   puts "Merging branch #{branch_to_merge}..."
   system(*%w[git merge], *merge_opts, branch_to_merge)
   if not $?.success?
-    raise Integration::Stop, ''
+    if $autocontinue && %x[git rerere remaining].chomp == ''
+      system(*%w[git commit --no-edit --no-verify -a])
+      raise Integration::Stop, '' unless $?.success?
+    else
+      raise Integration::Stop, ''
+    end
   end
   $merged << "#{branch_to_merge}\n"
 end
@@ -472,6 +478,13 @@ opts.on('a', 'add', '') do |v|
   $branches_to_add << v
   $need_rebuild = true
 end
+
+opts.on(nil, 'autocontinue', '') do |v|
+  $autocontinue = v
+end
+
+%x[git config --bool --get integration.autocontinue].chomp == "true" &&
+$autocontinue = true
 
 opts.parse
 
