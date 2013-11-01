@@ -251,6 +251,8 @@ end
 
 class Integration
 
+  attr_reader :commands
+
   class Stop < Exception
   end
 
@@ -511,6 +513,68 @@ def do_abort
     FileUtils.rm_rf($state_dir)
 end
 
+def status_merge(branch_to_merge = nil)
+  if not branch_to_merge
+    $stderr.puts "no branch specified with 'merge' command"
+    return
+  end
+  $status_base ||= 'master'
+
+  if ! system(*%w[git rev-parse --verify --quiet], "#{branch_to_merge}^{commit}", :out => File::NULL)
+    state = "."
+    verbose_state = "branch not found"
+  elsif system(*%w[git merge-base --is-ancestor], branch_to_merge, $status_base)
+    state = "+"
+    verbose_state = "merged to #{$status_base}"
+  elsif system(*%w[git-merge-base --is-ancestor], branch_to_merge, $branch.name)
+    state = "*"
+    verbose_state = "up-to-date"
+  else
+    state = "-"
+    verbose_state = "branch changed"
+  end
+
+  printf("%s %-*s(%s)", state, $longest_branch, branch_to_merge, verbose_state)
+  puts $message.gsub(/^./, '     \&') if $message
+  puts
+
+  log = %x[git --no-pager log --oneline --cherry "#{$status_base}...#{branch_to_merge}" -- 2> /dev/null].chomp
+  print(log.gsub(/^/, '  ') + "\n\n") unless log.empty?
+end
+
+def status_dot(*args)
+  args.each do |arg|
+    puts ". #{arg}\n"
+  end
+  puts $message.gsub(/^./, '     \&') if $message
+end
+
+def do_status
+  inst = $branch.read_instructions
+  die "Failed to read instruction list for branch #{$branch.name}" unless $?.success?
+
+  int = Integration.new(inst)
+  cmds = int.commands
+
+  $longest_branch = cmds.map do |cmd, args, msg|
+    next 0 if cmd != 'merge'
+    args.split(' ').first.size
+  end.max
+
+  cmds.each do |cmd, args, msg|
+    case cmd
+    when 'base'
+      $status_base = args
+    when 'merge'
+      status_merge(*args)
+    when '.'
+      status_dot(*args)
+    else
+      $stderr.puts "unhandled command: #{cmd} #{args}"
+    end
+  end
+end
+
 opts = ParseOpt.new
 opts.usage = 'git reintegrate'
 
@@ -553,6 +617,10 @@ end
 
 opts.on(nil, 'cat', '') do |v|
   $cat = v
+end
+
+opts.on('s', 'status', '') do |v|
+  $status = true
 end
 
 %x[git config --bool --get integration.autocontinue].chomp == "true" &&
@@ -599,4 +667,8 @@ end
 
 if $rebuild
   do_rebuild
+end
+
+if $status
+  do_status
 end
