@@ -5,6 +5,8 @@ require 'fileutils'
 $merged = []
 $actions = []
 
+$need_rebuild = false
+
 NULL_SHA1 = '0' * 40
 
 def die(*args)
@@ -438,14 +440,16 @@ opts.usage = 'git reintegrate'
 
 opts.on('c', 'create', 'create a new integration branch') do |v|
   $create = true
+  $need_rebuild = true
 end
 
 opts.on('e', 'edit', 'edit the instruction sheet for a branch') do |v|
   $edit = true
+  $need_rebuild = true
 end
 
 opts.on('r', 'rebuild', 'rebuild an integration branch') do |v|
-  $rebuild = true
+  $rebuild = v
 end
 
 opts.on(nil, 'continue', 'continue an in-progress rebuild') do |v|
@@ -482,6 +486,11 @@ end
 
 if $edit
   do_edit
+end
+
+if $rebuild == nil && $need_rebuild == true
+  %x[git config --bool --get integration.autorebuild].chomp == "true" &&
+  $rebuild = true
 end
 
 if $rebuild
