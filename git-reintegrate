@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+NULL_SHA1 = '0' * 40
+
 def die(*args)
   fmt = args.shift
   $stderr.printf("fatal: %s\n" % fmt, *args)
@@ -81,7 +83,106 @@ class ParseOpt
 
 end
 
+class Branch
+
+  attr_reader :name, :ref, :int
+
+  def initialize(name)
+    @name = name
+  end
+
+  def get
+    if @name
+      @ref = %x[git rev-parse --symbolic-full-name "refs/heads/#{@name}"].chomp
+      die "no such branch: #{@name}" unless $?.success?
+    else
+      @ref = %x[git symbolic-ref HEAD].chomp
+      die "HEAD is detached, could not figure out which integration branch to use" unless $?.success?
+      @name = @ref.gsub(%r{^refs/heads/}, '')
+    end
+
+    @int = @ref.gsub(%r{^refs/heads/}, 'refs/int/')
+
+    system(*%w[git rev-parse --quiet --verify], @int, :out => File::NULL)
+    die "Not an integration branch: #{@name}" unless $?.success?
+  end
+
+  def create(base = nil)
+    @ref = %x[git check-ref-format --normalize "refs/heads/#{@name}"].chomp
+    die "invalid branch name: #{@name}" unless $?.success?
+
+    if base
+      system(*%w[git rev-parse --quiet --verify], "#{base}^{commit}", :out => File::NULL)
+      die "no such commit: #{base}" unless $?.success?
+    else
+      base = 'master'
+    end
+
+    @int = @ref.gsub(%r{^refs/heads/}, 'refs/int/')
+
+    system(*%w[git update-ref], @ref, base, NULL_SHA1)
+    write_instructions("base #{base}\n")
+    system(*%w[git checkout], @name)
+    puts "Integration branch #{@name} created."
+  end
+
+  def read_instructions
+    %x[git cat-file blob #{@int}:instructions].chomp
+  end
+
+  def write_instructions(content)
+    insn_blob = insn_tree = insn_commit = nil
+
+    parent = %x[git rev-parse --quiet --verify #{@int}].chomp
+    parent_tree = %x[git rev-parse --quiet --verify #{@int}^{tree}].chomp
+
+    parent = nil if parent.empty?
+
+    IO.popen(%[git hash-object -w --stdin], 'r+') do |io|
+      io.write(content)
+      io.close_write
+      insn_blob = io.read.chomp
+    end
+    die "Failed to write instruction sheet blob object" unless $?.success?
+
+    IO.popen(%[git mktree], 'r+') do |io|
+      io.printf "100644 blob %s\t%s\n", insn_blob, 'instructions'
+      io.close_write
+      insn_tree = io.read.chomp
+    end
+    die "Failed to write instruction sheet tree object" unless $?.success?
+
+    # If there isn't anything to commit, stop now.
+    return if insn_tree == parent_tree
+
+    op = parent ? 'Update' : 'Create'
+    opts = parent ? ['-p', parent] : []
+    opts << insn_tree
+    IO.popen(%w[git commit-tree] + opts, 'r+') do |io|
+      io.write("#{op} integration branch #{@int}")
+      io.close_write
+      insn_commit = io.read.chomp
+    end
+    die "Failed to write instruction sheet commit" unless $?.success?
+
+    system(*%w[git update-ref], @int, insn_commit, parent || NULL_SHA1)
+    die "Failed to update instruction sheet reference" unless $?.success?
+  end
+
+end
+
 opts = ParseOpt.new
 opts.usage = 'git reintegrate'
 
+opts.on('c', 'create', 'create a new integration branch') do |v|
+  $create = true
+end
+
 opts.parse
+
+$branch = Branch.new(ARGV[0])
+if $create
+  $branch.create(ARGV[1])
+else
+  $branch.get
+end
