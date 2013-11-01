@@ -396,7 +396,7 @@ def cmd_merge(message, branch_to_merge, *args)
   merge_msg += "\n#{deindent(message)}\n" unless message.empty?
 
   merge_opts = args
-  merge_opts += %w[--quiet --no-log --no-ff]
+  merge_opts += %w[--quiet --no-ff]
   merge_opts += ['-m', merge_msg]
 
   puts "Merging branch #{branch_to_merge}..."
