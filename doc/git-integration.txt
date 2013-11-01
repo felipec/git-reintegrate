@@ -1,0 +1,127 @@
+git-reintegrate(1)
+==================
+
+NAME
+----
+git-reintegrate - Manage integration branches in Git
+
+SYNOPSIS
+--------
+[verse]
+'git reintegrate' --create <name> [<base>]
+'git reintegrate' [<action>...] [<branch>]
+'git reintegrate' (--continue | --abort)
+
+DESCRIPTION
+-----------
+include::description.txt[]
+
+OPTIONS
+-------
+--create::
+	Create a new integration branch.  If `--edit` is also specified then
+	the instruction sheet will be opened for editing.  If `--rebuild` is
+	also specified then the branch will be built.
++
+The name of the integration branch must be specified.  If a second positional
+argument is specified then it is used as the base branch, otherwise ``master''
+will be used.
+
+--edit::
+	Edit the instruction sheet for an integration branch.
++
+If no branch name is specified then the current branch must be an existing
+integration branch.
+
+--rebuild::
+--no-rebuild::
+	Rebuild the integration branch.  The `--no-rebuild` form exists to
+	suppress automatic rebuilding if the `integration.autorebuild`
+	configuration variable is set.
++
+If no branch name is specified then the current branch must be an existing
+integration branch.
+
+--cat::
+	Print the instruction sheet for the integration branch.  If this is
+	combined with options which modify the instruction sheet, then those
+	operations will be performed before it is printed.
+
+--status::
+	Prints the status of the integration branch.
+
+--add=<branch>::
+	Appends a line `merge <branch>` to the instruction list, causing that
+	branch to be included in the integration branch when it is next
+	rebuilt.  This option may be specified multiple times to add multiple
+	branches.
+
+--continue::
+	Restart the building process after having resolved a merge conflict.
+
+--abort::
+	Abort the rebuild operation and reset HEAD to the original branch.
+
+--autocontinue::
+--no-autocontinue::
+	Continues automatically if the rerere mechanism manages to resolve all
+	conflicts during a merge.
+
+If `--continue` or `--abort` are specified then no other options may be given.
+Otherwise at least one of `--create`, `--add`, `--edit`, `--cat` or
+`--rebuild` must be specified.  If more than one is specified then they will
+be performed in the order 'create', 'add', 'edit', 'cat', 'rebuild', 'status'.
+
+CONFIGURATION
+-------------
+
+integration.autocontinue::
+	Sets the default for the `--autocontinue` option.
+
+integration.autorebuild::
+	Automatically rebuild the integration branch after creating/editing it
+	if `--no-rebuild` is not specified.
+
+FORMAT OF INSTRUCTIONS
+----------------------
+The instruction sheet consists of a series of instructions which begin in
+column zero, each of which may be followed by indented comments.  The
+following instructions are supported:
+
++base+ '<ref>'::
+	Resets the state of the integration branch to the specified revision.
+	This should always be the first instruction in the instruction sheet,
+	and should appear only at the top of the instruction sheet.
+
++merge+ '<ref>' '[<options>]'::
+	Merges the specified ref into the integration branch.  Any comments
+	following the instruction are appended to the merge commit's commit
+	message.
++
+If any options are given after the ref (and on the same line) then these are
+passed to 'git merge'.  This may be useful for specifying an alternative merge
+strategy for a branch.
+
++.+ '<args...>'::
+	Ignores this command and its description.  This can be used to remove
+	a branch from the integration branch without needing to delete it and
+	its description from the instruction sheet.
++
+For example, if you need to remove a branch until it is in better shape but
+don't want to lose track of it, you can simply add ``. '' to the beginning of
+that branch's 'merge' line.
+
+Example
+~~~~~~~
+------
+base master
+
+merge my-experimental-feature
+
+  I think this is a good idea, but want to dogfood it before I
+  decide whether to submit it upstream.
+
+merge my-site-specific-changes
+
+  Some changes to suit my environment.  DO NOT SUBMIT THESE.
+------
