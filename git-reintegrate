@@ -3,6 +3,7 @@
 require 'fileutils'
 
 $merged = []
+$actions = []
 
 NULL_SHA1 = '0' * 40
 
@@ -394,6 +395,44 @@ def do_rebuild
   Integration.run(inst)
 end
 
+def get_head_file
+  die "no integration in progress" unless test('f', $head_file)
+  branch_name = File.read($head_file).gsub!(%r{^refs/heads/}, '')
+  branch = Branch.new(branch_name)
+  branch.get
+  return branch
+end
+
+def do_continue
+  $branch = get_head_file
+
+  if File.exists?("#{$git_dir}/MERGE_HEAD")
+    # We are being called to continue an existing operation,
+    # without the user having manually committed the result of
+    # resolving conflicts.
+    system(*%w[git update-index --ignore-submodules --refresh]) &&
+      system(*%w[git diff-files --quiet --ignore-submodules]) ||
+      die("You must edit all merge conflicts and then mark them as resolved using git add")
+
+    system(*%w[git commit --quiet --no-edit])
+    die "merge_head" unless $?.success?
+  end
+
+  $merged = File.read($merged_file).split("\n")
+
+  File.open($insns) do |f|
+    Integration.run(f)
+  end
+end
+
+def do_abort
+  $branch = get_head_file
+
+  system(*%w[git symbolic-ref HEAD], $branch.ref) &&
+    system(*%w[git reset --hard], $branch.ref) &&
+    FileUtils.rm_rf($state_dir)
+end
+
 opts = ParseOpt.new
 opts.usage = 'git reintegrate'
 
@@ -409,6 +448,14 @@ opts.on('r', 'rebuild', 'rebuild an integration branch') do |v|
   $rebuild = true
 end
 
+opts.on(nil, 'continue', 'continue an in-progress rebuild') do |v|
+  $actions << :continue
+end
+
+opts.on(nil, 'abort', 'abort an in-progress rebuild') do |v|
+  $actions << :abort
+end
+
 opts.parse
 
 $git_dir = %x[git rev-parse --git-dir].chomp
@@ -418,6 +465,13 @@ $start_file = "#{$state_dir}/start-point"
 $head_file = "#{$state_dir}/head-name"
 $merged_file = "#{$state_dir}/merged"
 $insns = "#{$state_dir}/instructions"
+
+case $actions.first
+when :continue
+  do_continue
+when :abort
+  do_abort
+end
 
 $branch = Branch.new(ARGV[0])
 if $create
