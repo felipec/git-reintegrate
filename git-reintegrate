@@ -24,8 +24,8 @@ def die(*args)
 end
 
 def git_editor(*args)
-  editor = %x[git var GIT_EDITOR].chomp
-  system(editor, *args)
+  editor = %x[git var GIT_EDITOR].chomp.split(' ')
+  system(*editor, *args)
 end
 
 class ParseOpt
