@@ -1,5 +1,11 @@
 #!/usr/bin/env ruby
 
+#
+# Copyright (C) 2013 Felipe Contreras
+#
+# This file may be used under the terms of the GNU GPL version 2.
+#
+
 require 'fileutils'
 
 $merged = []

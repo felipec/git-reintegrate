@@ -1,5 +1,12 @@
 #!/bin/sh
 
+#
+# Copyright (C) 2013 Felipe Contreras
+# Copyright (C) 2013 John Keeping
+#
+# This file may be used under the terms of the GNU GPL version 2.
+#
+
 test_description='Test the "fixup" instruction'
 
 . ./sharness.sh
