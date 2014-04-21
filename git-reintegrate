@@ -205,7 +205,7 @@ class Branch
       end
     end
 
-    write_instructions(series.join("\n"))
+    write_instructions(series.join("\n") + "\n")
 
     puts "Integration branch #{@name} generated."
   end
