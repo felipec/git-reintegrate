@@ -106,10 +106,8 @@ end
 def parse_merge(other, commit, msg, body)
   case msg
   when /^Merge branch '(.*)'/
-    branch = $1
     ref = 'refs/heads/' + $1
   when /^Merge remote branch '(.*)'/
-    branch = $1
     prefix = 'refs/'
     ref = 'refs/' + $1
   else
