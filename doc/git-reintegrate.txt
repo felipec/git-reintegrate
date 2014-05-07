@@ -70,6 +70,11 @@ If no base is specified, 'master' is assumed.
 	Continues automatically if the rerere mechanism manages to resolve all
 	conflicts during a merge.
 
+--prefix::
+	Add a prefix to each branch in the instruction sheet. So if the
+	instruction says 'merge feature-a' it gets transpated to 'merge
+	prefix/feature-a'.
+
 If `--continue` or `--abort` are specified then no other options may be given.
 
 CONFIGURATION
@@ -81,6 +86,10 @@ integration.autocontinue::
 integration.autorebuild::
 	Automatically rebuild the integration branch after creating/editing it
 	if `--no-rebuild` is not specified.
+
+integration.prefix::
+	Automatically adds a prefix to each branch as if `--prefix` was
+	specified. `--prefix` overrides this value.
 
 FORMAT OF INSTRUCTIONS
 ----------------------

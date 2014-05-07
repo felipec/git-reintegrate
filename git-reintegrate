@@ -14,6 +14,7 @@ $actions = []
 $need_rebuild = false
 $branches_to_add = []
 $autocontinue = false
+$prefix = nil
 
 NULL_SHA1 = '0' * 40
 
@@ -26,6 +27,12 @@ end
 def git_editor(*args)
   editor = %x[git var GIT_EDITOR].chomp.split(' ')
   system(*editor, *args)
+end
+
+class String
+  def skip_prefix(prefix)
+    return self[prefix.length..-1]
+  end
 end
 
 class ParseOpt
@@ -120,7 +127,7 @@ def parse_merge(other, commit, msg, body)
   if merged =~ /\h{40} (.*)/
     merged = $1
   end
-  merged = "merge #{merged}"
+  merged = "merge #{merged.skip_prefix($prefix)}"
   merged += "\n\n" + body.gsub(/^/, '  ') unless body.empty?
   merged
 end
@@ -154,16 +161,17 @@ class Branch
     die "invalid branch name: #{@name}" unless $?.success?
 
     if base
+      base = $prefix + base
       system(*%w[git rev-parse --quiet --verify], "#{base}^{commit}", :out => File::NULL)
       die "no such commit: #{base}" unless $?.success?
     else
-      base = 'master'
+      base = $prefix + 'master'
     end
 
     @int = @ref.gsub(%r{^refs/heads/}, 'refs/int/')
 
     system(*%w[git update-ref], @ref, base, NULL_SHA1)
-    write_instructions("base #{base}\n")
+    write_instructions("base #{base.skip_prefix($prefix)}\n")
     system(*%w[git checkout], @name)
     puts "Integration branch #{@name} created."
   end
@@ -189,7 +197,7 @@ class Branch
 
     series = []
 
-    series << "base #{base}"
+    series << "base #{base.skip_prefix($prefix)}"
 
     IO.popen(%w[git log --no-decorate --format=%H%n%B -z --reverse --first-parent] + ["^#{base}", @name]) do |io|
       io.each("\0") do |l|
@@ -336,6 +344,7 @@ class Integration
     end
 
     File.write($merged_file, $merged.join("\n"))
+    File.write($prefix_file, $prefix)
 
     $stderr.puts(msg) if msg and ! msg.empty?
     $stderr.puts <<EOF
@@ -390,6 +399,7 @@ EOF
 end
 
 def cmd_base(message, base)
+  base = $prefix + base
   puts "Resetting to base #{base}..."
   system(*%w[git reset --quiet --hard], base)
   raise Integration::Stop, "Failed to reset to base #{base}" unless $?.success?
@@ -402,6 +412,7 @@ def deindent(msg)
 end
 
 def cmd_merge(message, branch_to_merge, *args)
+  branch_to_merge = $prefix + branch_to_merge
   merge_msg = "Merge branch '#{branch_to_merge}' into #{$branch.name}\n"
   merge_msg += "\n#{deindent(message)}\n" unless message.empty?
 
@@ -520,6 +531,7 @@ def do_continue
   end
 
   $merged = File.read($merged_file).split("\n")
+  $prefix = File.read($prefix_file)
 
   File.open($insns) do |f|
     Integration.run(f)
@@ -539,7 +551,9 @@ def status_merge(branch_to_merge = nil)
     $stderr.puts "no branch specified with 'merge' command"
     return
   end
-  $status_base ||= 'master'
+  $status_base ||= $prefix + 'master'
+
+  branch_to_merge = $prefix + branch_to_merge
 
   if ! system(*%w[git rev-parse --verify --quiet], "#{branch_to_merge}^{commit}", :out => File::NULL)
     state = "."
@@ -585,7 +599,7 @@ def do_status
   cmds.each do |cmd, args, msg|
     case cmd
     when 'base'
-      $status_base = args
+      $status_base = $prefix + args
     when 'merge'
       status_merge(*args)
     when '.'
@@ -642,10 +656,16 @@ opts.on('s', 'status', '') do |v|
   $status = true
 end
 
+opts.on(nil, 'prefix', '') do |v|
+  $prefix = v
+end
+
 %x[git config --bool --get integration.autocontinue].chomp == "true" &&
 $autocontinue = true
 
 opts.parse
+
+$prefix = %x[git config --get integration.prefix].chomp unless $prefix
 
 $git_dir = %x[git rev-parse --git-dir].chomp
 
@@ -653,6 +673,7 @@ $state_dir = "#{$git_dir}/integration"
 $start_file = "#{$state_dir}/start-point"
 $head_file = "#{$state_dir}/head-name"
 $merged_file = "#{$state_dir}/merged"
+$prefix_file = "#{$state_dir}/prefix"
 $insns = "#{$state_dir}/instructions"
 
 case $actions.first
@@ -663,6 +684,7 @@ when :abort
 end
 
 $branches_to_add.each do |branch|
+  branch = $prefix + branch
   system(*%w[git rev-parse --quiet --verify], "#{branch}^{commit}", :out => File::NULL)
   die "not a valid commit: #{branch}" unless $?.success?
 end
