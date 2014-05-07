@@ -628,8 +628,6 @@ opts.on('g', 'generate', 'generate instruction sheet') do |v|
 end
 
 opts.on('a', 'add', '') do |v|
-  system(*%w[git rev-parse --quiet --verify], "#{v}^{commit}", :out => File::NULL)
-  die "not a valid commit: #{v}" unless $?.success?
   $branches_to_add << v
   $need_rebuild = true
 end
@@ -664,6 +662,11 @@ when :continue
   do_continue
 when :abort
   do_abort
+end
+
+$branches_to_add.each do |branch|
+  system(*%w[git rev-parse --quiet --verify], "#{branch}^{commit}", :out => File::NULL)
+  die "not a valid commit: #{branch}" unless $?.success?
 end
 
 $branch = Branch.new(ARGV[0])
