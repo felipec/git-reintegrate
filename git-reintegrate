@@ -426,6 +426,13 @@ def cmd_fixup(message, fixup_commit, *args)
   raise Integration::Stop, '' unless $?.success?
 end
 
+def cmd_commit(message, *args)
+  puts "Emtpy commit"
+
+  system(*%w[git commit --allow-empty -m], message)
+  raise Integration::Stop, '' unless $?.success?
+end
+
 def cmd_dot(message, *args)
 end
 

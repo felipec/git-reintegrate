@@ -145,4 +145,24 @@ test_expect_success 'setup branches' '
 	test_cmp expected actual
 '
 
+write_script .git/EDITOR <<\EOF
+#!/bin/sh
+cat >> "$1" <<EOM
+commit
+
+ Empty commit.
+EOM
+EOF
+
+test_expect_success 'empty commit' '
+	GIT_EDITOR=.git/EDITOR git reintegrate --edit pu &&
+	git reintegrate --rebuild pu &&
+	git log --format="%B" -1 > actual &&
+	cat > expected <<-EOF &&
+	Empty commit.
+
+	EOF
+	test_cmp expected actual
+'
+
 test_done
