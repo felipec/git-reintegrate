@@ -117,7 +117,7 @@ test_expect_success 'do not create empty commits' '
 	test_cmp expect actual
 '
 
-test_expect_success 'setup branches' '
+test_expect_success 'generate instructions' '
 	git init -q tmp &&
 	test_when_finished "rm -rf tmp" &&
 	(
@@ -176,7 +176,7 @@ merge branch3
 EOM
 EOF
 
-test_expect_success 'empty commit' '
+test_expect_success 'pause command' '
 	GIT_EDITOR=.git/EDITOR git reintegrate --edit pu &&
 	test_must_fail git reintegrate --rebuild pu &&
 	check_int pu <<-EOF &&
