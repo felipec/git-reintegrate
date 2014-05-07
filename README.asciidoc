@@ -1,35 +1,38 @@
 = git-reintegration =
 
-This tool allows the regeneration of integration branches.
+This tool helps to manage integration branches.
 
-If you already have an integration branch, like git.git's pu, you can
-automatically generate the integration insructions:
+For example, say you have a repository with three branches:
+
+ * feature-a
+ * feature-b
+ * maint
+
+And you have an integration branch named 'integration' where you merge all
+these branches on top of 'master'.
+
+You can generate the instructions needed by `git reintegrate` with this
+command:
 
 ------------
-git clone https://github.com/gitster/git/
-cd git
-git fetch -u origin 'refs/tags/*:refs/tags/*' 'refs/heads/*:refs/heads/*'
-git checkout pu
-git reintegrate --generate pu master
-git reintegrate --cat
+git reintegrate --generate integration master
 ------------
 
-Which would generate something like:
+Which would generate instructions like:
 
 ------------
 base master
-merge jl/submodule-mv
+merge feature-a
 
-  Moving a regular file in a repository with a .gitmodules file was
-  producing a warning 'Could not find section in .gitmodules where
-  path=<filename>'.
+ Merge work in progress feature-a
 
-merge ap/remote-hg-unquote-cquote
+merge feature-b
 
-  A fast-import stream expresses a pathname with funny characters by
-  quoting them in C style; remote-hg remote helper forgot to unquote
-  such a path.
+ Merge feature-b
 
+merge maint
+
+ Merge good stuff
 ------------
 
 You can edit the instructions with `git reintegrate --edit`.
@@ -37,12 +40,20 @@ You can edit the instructions with `git reintegrate --edit`.
 The simplest way to begin an integration branch is with:
 
 ------------
-git reintegrate --create pu master
+git reintegrate --create integration master
 git reintegrate --add=branch1 --add=branch2 --add=branch3
 ------------
 
-To generate the integration branch run `git reintegrate --rebuild`, if there
+To regenerate the integration branch run `git reintegrate --rebuild`, if there
 are merge conflicts, solve them and continue with `git reintegrate --continue`.
+
+You probably want to configure `git rerere` so that each time you resolve a
+conflict it gets automatically stored, so the next time Git sees the conflict,
+it's resolved automatically:
+
+------------
+git config --global rerere.enabled true
+------------
 
 == Acknowledgements ==
 
