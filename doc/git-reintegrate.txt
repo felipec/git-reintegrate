@@ -9,7 +9,9 @@ SYNOPSIS
 --------
 [verse]
 'git reintegrate' --create <name> [<base>]
-'git reintegrate' [<action>...] [<branch>]
+'git-reintegrate' --generate <name> [<base>]
+'git-reintegrate' --add=<name>
+'git-reintegrate' (--edit | --rebuild | --cat | --status) [<name>]
 'git reintegrate' (--continue | --abort)
 
 DESCRIPTION
@@ -19,33 +21,26 @@ include::description.txt[]
 OPTIONS
 -------
 --create::
-	Create a new integration branch.  If `--edit` is also specified then
-	the instruction sheet will be opened for editing.  If `--rebuild` is
-	also specified then the branch will be built.
+	Create a new integration branch.
 +
-The name of the integration branch must be specified.  If a second positional
-argument is specified then it is used as the base branch, otherwise ``master''
-will be used.
+If no base is specified, 'master' is assumed.
+
+--generate::
+	Generates the instruction sheet basied on an existing integration
+	branch. The messages of each merge commit will be parsed to construct
+	the instructions. The messages should be in the standard form
+	`Merge branch 'name'` (or remote branch).
++
+If no base is specified, 'master' is assumed.
+
+--[no-]rebuild::
+	Rebuild the integration branch.
 
 --edit::
-	Edit the instruction sheet for an integration branch.
-+
-If no branch name is specified then the current branch must be an existing
-integration branch.
-
---rebuild::
---no-rebuild::
-	Rebuild the integration branch.  The `--no-rebuild` form exists to
-	suppress automatic rebuilding if the `integration.autorebuild`
-	configuration variable is set.
-+
-If no branch name is specified then the current branch must be an existing
-integration branch.
+	Edit the instruction sheet.
 
 --cat::
-	Print the instruction sheet for the integration branch.  If this is
-	combined with options which modify the instruction sheet, then those
-	operations will be performed before it is printed.
+	Print the instruction sheet.
 
 --status::
 	Prints the status of the integration branch.
@@ -57,20 +52,16 @@ integration branch.
 	branches.
 
 --continue::
-	Restart the building process after having resolved a merge conflict.
+	Restart the rebuild process after having resolved a merge conflict.
 
 --abort::
-	Abort the rebuild operation and reset HEAD to the original branch.
+	Abort the rebuild operation.
 
---autocontinue::
---no-autocontinue::
+--[no-]autocontinue::
 	Continues automatically if the rerere mechanism manages to resolve all
 	conflicts during a merge.
 
 If `--continue` or `--abort` are specified then no other options may be given.
-Otherwise at least one of `--create`, `--add`, `--edit`, `--cat` or
-`--rebuild` must be specified.  If more than one is specified then they will
-be performed in the order 'create', 'add', 'edit', 'cat', 'rebuild', 'status'.
 
 CONFIGURATION
 -------------
