@@ -111,6 +111,17 @@ For example, if you need to remove a branch until it is in better shape but
 don't want to lose track of it, you can simply add ``. '' to the beginning of
 that branch's 'merge' line.
 
++fixup+ '<ref>'::
+	Picks up an existing commit to be applied on top of a merge as a fixup.
+
++commit+::
+	Adds an empty commit with the specified message mostly to be used as a
+	comment.
+
++pause+::
+	Pauses the rebuild process, so the user can do certain actions
+	manually, for example fixing a wrong conflict resoltion.
+
 Example
 ~~~~~~~
 ------
