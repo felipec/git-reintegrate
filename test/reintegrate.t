@@ -65,8 +65,8 @@ check_int() {
 	local int=$1 IFS=':'
 	while read branch msg
 	do
-		echo "* Merge branch '$branch' into $int"
-		echo "$LF$msg$LF"
+		echo "* Merge branch '$branch' into $int$LF"
+		test "$msg" && echo "$msg$LF" || true
 	done > expected
 	) &&
 
