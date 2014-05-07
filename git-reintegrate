@@ -278,7 +278,7 @@ class Integration
       when ''
       when /^\s(.*)$/
         msg << $1
-      when /(\S+) (.*)$/
+      when /(\S+) ?(.*)$/
         cmds << [cmd, args, msg] if cmd
         cmd, args = [$1, $2]
         msg = ""
