@@ -37,11 +37,11 @@ write_script .git/EDITOR <<\EOF
 cat >> "$1" <<EOM
 merge branch1
 
-  This merges branch 1.
+ This merges branch 1.
 
 merge branch2
 
-  This merges branch 2.
+ This merges branch 2.
 EOM
 EOF
 
