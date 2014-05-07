@@ -262,6 +262,9 @@ class Integration
   class Stop < Exception
   end
 
+  class Pause < Exception
+  end
+
   @@map = { '.' => :cmd_dot }
 
   def initialize(obj)
@@ -299,6 +302,9 @@ class Integration
         @commands.shift
       end
     rescue Integration::Stop => e
+      stop(e.message)
+    rescue Integration::Pause => e
+      @commands.shift
       stop(e.message)
     else
       finish
@@ -431,6 +437,10 @@ def cmd_commit(message, *args)
 
   system(*%w[git commit --allow-empty -m], message)
   raise Integration::Stop, '' unless $?.success?
+end
+
+def cmd_pause(message, *args)
+  raise Integration::Pause, (message || 'Pause')
 end
 
 def cmd_dot(message, *args)

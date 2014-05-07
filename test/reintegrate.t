@@ -165,4 +165,30 @@ test_expect_success 'empty commit' '
 	test_cmp expected actual
 '
 
+write_script .git/EDITOR <<\EOF
+#!/bin/sh
+cat > "$1" <<EOM
+base master
+merge branch1
+merge branch2
+pause
+merge branch3
+EOM
+EOF
+
+test_expect_success 'empty commit' '
+	GIT_EDITOR=.git/EDITOR git reintegrate --edit pu &&
+	test_must_fail git reintegrate --rebuild pu &&
+	check_int pu <<-EOF &&
+	branch2:
+	branch1:
+	EOF
+	git reintegrate --continue &&
+	check_int pu <<-EOF
+	branch3:
+	branch2:
+	branch1:
+	EOF
+'
+
 test_done
