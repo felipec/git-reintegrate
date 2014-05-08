@@ -55,6 +55,12 @@ it's resolved automatically:
 git config --global rerere.enabled true
 ------------
 
+== Installation ==
+
+Simply copy the script anywhere in your '$PATH' and make it executable, or run
+`make install` which will install it by default to your '~/bin/' directory
+(make sure it's in your '$PATH').
+
 == Acknowledgements ==
 
 This is a rewrite of John Keeping's `git integration` tool
