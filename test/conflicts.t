@@ -9,7 +9,7 @@
 
 test_description='Test git reintegrage branches with no conflicts'
 
-. ./sharness.sh
+. ./test-lib.sh
 
 commit_file() {
 	local filename="$1"

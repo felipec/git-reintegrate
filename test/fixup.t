@@ -9,7 +9,7 @@
 
 test_description='Test the "fixup" instruction'
 
-. ./sharness.sh
+. ./test-lib.sh
 
 commit_file() {
 	local filename="$1"
