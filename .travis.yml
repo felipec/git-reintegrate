@@ -1,7 +1,7 @@
 language: ruby
 
 script:
-  - make test
+  - make test TEST_OPTS=-v
 
 rvm:
   - 2.1.0
