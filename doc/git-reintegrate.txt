@@ -35,7 +35,7 @@ OPTIONS
 If no base is specified, 'master' is assumed.
 
 --generate::
-	Generates the instruction sheet basied on an existing integration
+	Generates the instruction sheet based on an existing integration
 	branch. The messages of each merge commit will be parsed to construct
 	the instructions. The messages should be in the standard form
 	`Merge branch 'name'` (or remote branch).
@@ -111,7 +111,7 @@ strategy for a branch.
 
 +pause+::
 	Pauses the rebuild process, so the user can do certain actions
-	manually, for example fixing a wrong conflict resoltion.
+	manually, for example fixing a wrong conflict resolution.
 
 +.+ '<args...>'::
 	Ignores this command and its description.  This can be used to remove
