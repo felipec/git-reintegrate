@@ -13,6 +13,7 @@ SYNOPSIS
 'git-reintegrate' --add=<name>
 'git-reintegrate' (--edit | --rebuild | --cat | --status) [<name>]
 'git reintegrate' (--continue | --abort)
+'git-reintegrate' --list
 
 DESCRIPTION
 -----------
@@ -69,6 +70,9 @@ If no base is specified, 'master' is assumed.
 --[no-]autocontinue::
 	Continues automatically if the rerere mechanism manages to resolve all
 	conflicts during a merge.
+
+--list::
+	List all the current integration branches.
 
 If `--continue` or `--abort` are specified then no other options may be given.
 

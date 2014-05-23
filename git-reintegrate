@@ -642,6 +642,10 @@ opts.on('s', 'status', '') do |v|
   $status = true
 end
 
+opts.on('l', 'list', 'list integration branches') do |v|
+  $list = true
+end
+
 %x[git config --bool --get integration.autocontinue].chomp == "true" &&
 $autocontinue = true
 
@@ -660,6 +664,15 @@ when :continue
   do_continue
 when :abort
   do_abort
+end
+
+if $list
+  IO.popen(%w[git for-each-ref refs/int/]).each do |line|
+    if line =~ %r{.*\trefs/int/(.*)}
+      puts $1
+    end
+  end
+  exit
 end
 
 $branches_to_add.each do |branch|
