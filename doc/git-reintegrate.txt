@@ -74,6 +74,10 @@ If no base is specified, 'master' is assumed.
 --list::
 	List all the current integration branches.
 
+--delete::
+	Delete an integration branch. It doesn't delete the branch itself, only
+	the integration information.
+
 If `--continue` or `--abort` are specified then no other options may be given.
 
 CONFIGURATION

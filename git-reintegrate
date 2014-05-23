@@ -646,6 +646,10 @@ opts.on('l', 'list', 'list integration branches') do |v|
   $list = true
 end
 
+opts.on('d', 'delete', 'delete an integration branch') do |v|
+  $delete = true
+end
+
 %x[git config --bool --get integration.autocontinue].chomp == "true" &&
 $autocontinue = true
 
@@ -672,6 +676,13 @@ if $list
       puts $1
     end
   end
+  exit
+end
+
+if $delete
+  name = ARGV[0]
+  msg = 'reintegrate: delete branch'
+  system(*%W[git update-ref -d refs/int/#{name}] + ['-m', msg])
   exit
 end
 
