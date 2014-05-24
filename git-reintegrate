@@ -291,6 +291,25 @@ class Integration
     self.new(obj).run
   end
 
+  def self.start(branch, inst)
+    require_clean_work_tree('integrate', "Please commit or stash them.")
+
+    orig_head = %x[git rev-parse --quiet --verify "#{branch}^{commit}"].chomp
+    system(*%w[git update-ref ORIG_HEAD], orig_head)
+
+    system(*%w[git checkout --quiet], "#{branch}^0")
+    die "could not detach HEAD" unless $?.success?
+
+    FileUtils.mkdir_p($state_dir)
+
+    File.write($head_file, branch)
+    commit = %x[git rev-parse --quiet --verify #{branch}].chomp
+    File.write($start_file, commit)
+
+    File.write($insns, inst)
+    self.run(inst)
+  end
+
   def run
     begin
       while cmd = @commands.first
@@ -469,25 +488,10 @@ end
 def do_rebuild
   branch = $branch.ref
 
-  require_clean_work_tree('integrate', "Please commit or stash them.")
-
-  orig_head = %x[git rev-parse --quiet --verify "#{branch}^{commit}"].chomp
-  system(*%w[git update-ref ORIG_HEAD], orig_head)
-
-  system(*%w[git checkout --quiet], "#{branch}^0")
-  die "could not detach HEAD" unless $?.success?
-
-  FileUtils.mkdir_p($state_dir)
-
-  File.write($head_file, branch)
-  commit = %x[git rev-parse --quiet --verify #{branch}].chomp
-  File.write($start_file, commit)
-
   inst = $branch.read_instructions
   die "Failed to read instruction list for branch #{$branch.name}" unless $?.success?
 
-  File.write($insns, inst)
-  Integration.run(inst)
+  Integration.start(branch, inst)
 end
 
 def get_head_file
