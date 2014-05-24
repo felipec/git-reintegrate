@@ -108,14 +108,12 @@ def parse_merge(other, commit, msg, body)
   when /^Merge branch '(.*)'/
     ref = 'refs/heads/' + $1
   when /^Merge remote branch '(.*)'/
-    prefix = 'refs/'
     ref = 'refs/' + $1
   else
     $stderr.puts "Huh?: #{msg}"
     return
   end
 
-  tip = %x[git name-rev --refs="#{ref}" 2> /dev/null].chomp
   merged = %x[git name-rev --refs="#{ref}" "#{other}" 2> /dev/null].chomp
   if merged =~ /\h{40} (.*)/
     merged = $1
@@ -352,9 +350,6 @@ EOF
 end
 
 def do_edit
-  ref = $branch.int
-  branch = $branch.ref
-
   edit_file = "#{$git_dir}/GIT-INTEGRATION"
 
   content = $branch.read_instructions
@@ -473,7 +468,6 @@ end
 
 def do_rebuild
   branch = $branch.ref
-  ref = $branch.int
 
   require_clean_work_tree('integrate', "Please commit or stash them.")
 
