@@ -133,12 +133,14 @@ test_expect_success 'generate instructions' '
 	git merge --no-ff branch1 &&
 	git merge --no-ff branch2 &&
 	git merge --no-ff branch3 &&
+	git checkout branch1 &&
+	commit_file branch1 branch1-update &&
 	git reintegrate --generate pu master &&
-	git reintegrate --cat > ../actual
+	git reintegrate --cat pu > ../actual
 	) &&
 	cat > expected <<-EOF &&
 	base master
-	merge branch1
+	merge branch1~1
 	merge branch2
 	merge branch3
 	EOF
