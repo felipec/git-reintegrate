@@ -653,20 +653,20 @@ opts.on('g', 'generate', 'generate instruction sheet') do |v|
   $generate = true
 end
 
-opts.on('a', 'add', '') do |v|
+opts.on('a', 'add', 'add a branch to merge in the instruction sheet') do |v|
   $branches_to_add << v
   $need_rebuild = true
 end
 
-opts.on(nil, 'autocontinue', '') do |v|
+opts.on(nil, 'autocontinue', 'continue automatically on merge conflicts if possible') do |v|
   $autocontinue = v
 end
 
-opts.on(nil, 'cat', '') do |v|
+opts.on(nil, 'cat', 'show the instructions of an integration branch') do |v|
   $cat = v
 end
 
-opts.on('s', 'status', '') do |v|
+opts.on('s', 'status', 'shows the status of all the dependencies of an integration branch') do |v|
   $status = true
 end
 
