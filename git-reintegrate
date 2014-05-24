@@ -486,17 +486,15 @@ def require_clean_work_tree(action = nil, msg = nil, quiet = false)
 end
 
 def do_rebuild
-  branch = $branch.ref
-
   inst = $branch.read_instructions
   die "Failed to read instruction list for branch #{$branch.name}" unless $?.success?
 
-  Integration.start(branch, inst)
+  Integration.start($branch.name, $branch.name, inst)
 end
 
 def get_head_file
   die "no integration in progress" unless test('f', $head_file)
-  branch_name = File.read($head_file).gsub!(%r{^refs/heads/}, '')
+  branch_name = File.read($head_file).gsub(%r{^refs/heads/}, '')
   branch = Branch.new(branch_name)
   branch.get
   return branch
