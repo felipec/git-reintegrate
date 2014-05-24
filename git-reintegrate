@@ -126,9 +126,15 @@ end
 class Branch
 
   attr_reader :name, :ref, :int
+  attr_reader :into_name, :into_ref
 
   def initialize(name)
     @name = name
+  end
+
+  def into_name=(name)
+    @into_name = name
+    @into_ref = %x[git rev-parse --symbolic-full-name "refs/heads/#{name}"].chomp
   end
 
   def get
@@ -291,7 +297,7 @@ class Integration
     self.new(obj).run
   end
 
-  def self.start(branch, inst)
+  def self.start(branch, into_name, inst)
     require_clean_work_tree('integrate', "Please commit or stash them.")
 
     orig_head = %x[git rev-parse --quiet --verify "#{branch}^{commit}"].chomp
@@ -305,6 +311,9 @@ class Integration
     File.write($head_file, branch)
     commit = %x[git rev-parse --quiet --verify #{branch}].chomp
     File.write($start_file, commit)
+
+    $branch.into_name = into_name
+    File.write($into_file, into_name)
 
     File.write($insns, inst)
     self.run(inst)
@@ -336,11 +345,15 @@ class Integration
   end
 
   def finish
-    system(*%w[git update-ref], $branch.ref, 'HEAD', File.read($start_file))
-    system(*%w[git symbolic-ref], 'HEAD', $branch.ref)
+    system(*%w[git update-ref], $branch.into_ref, 'HEAD', File.read($start_file))
+    system(*%w[git symbolic-ref], 'HEAD', $branch.into_ref)
     FileUtils.rm_rf($state_dir)
     system(*%w[git gc --auto])
-    puts "Successfully re-integrated #{$branch.name}."
+    if $branch.name == $branch.into_name
+      puts "Successfully re-integrated #{$branch.name}."
+    else
+      puts "Successfully applied #{$branch.name} into #{$branch.into_name}."
+    end
   end
 
   def stop(msg = nil)
@@ -416,7 +429,7 @@ def deindent(msg)
 end
 
 def cmd_merge(message, branch_to_merge, *args)
-  merge_msg = "Merge branch '#{branch_to_merge}' into #{$branch.name}\n"
+  merge_msg = "Merge branch '#{branch_to_merge}' into #{$branch.into_name}\n"
   merge_msg += "\n#{deindent(message)}\n" unless message.empty?
 
   merge_opts = args
@@ -497,6 +510,7 @@ def get_head_file
   branch_name = File.read($head_file).gsub(%r{^refs/heads/}, '')
   branch = Branch.new(branch_name)
   branch.get
+  branch.into_name = File.read($into_file)
   return branch
 end
 
@@ -525,9 +539,27 @@ end
 def do_abort
   $branch = get_head_file
 
-  system(*%w[git symbolic-ref HEAD], $branch.ref) &&
-    system(*%w[git reset --hard], $branch.ref) &&
+  system(*%w[git symbolic-ref HEAD], $branch.into_ref) &&
+    system(*%w[git reset --hard], $branch.into_ref) &&
     FileUtils.rm_rf($state_dir)
+end
+
+def do_apply
+  head = %x[git rev-parse --symbolic --abbrev-ref HEAD].chomp
+
+  inst = $branch.read_instructions
+  die "Failed to read instruction list for branch #{$branch.name}" unless $?.success?
+
+  inst = inst.lines.reject do |line|
+    next true if line =~ /^base /
+    if line =~ /^merge (.*)$/
+      system(*%W[git merge-base --is-ancestor #{$1} HEAD])
+      next true if $?.success?
+    end
+    false
+  end.join
+
+  Integration.start(head, head, inst)
 end
 
 def status_merge(branch_to_merge = nil)
@@ -646,6 +678,10 @@ opts.on('d', 'delete', 'delete an integration branch') do |v|
   $delete = true
 end
 
+opts.on(nil, 'apply', 'apply an integration branch on the current branch') do |v|
+  $apply = true
+end
+
 %x[git config --bool --get integration.autocontinue].chomp == "true" &&
 $autocontinue = true
 
@@ -658,6 +694,7 @@ $start_file = "#{$state_dir}/start-point"
 $head_file = "#{$state_dir}/head-name"
 $merged_file = "#{$state_dir}/merged"
 $insns = "#{$state_dir}/instructions"
+$into_file = "#{$state_dir}/into"
 
 case $actions.first
 when :continue
@@ -711,6 +748,10 @@ end
 
 if $rebuild
   do_rebuild
+end
+
+if $apply
+  do_apply
 end
 
 if $status
