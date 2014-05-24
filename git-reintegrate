@@ -414,7 +414,7 @@ def cmd_merge(message, branch_to_merge, *args)
       raise Integration::Stop, ''
     end
   end
-  $merged << "#{branch_to_merge}\n"
+  $merged << branch_to_merge
 end
 
 def cmd_fixup(message, fixup_commit, *args)
