@@ -392,7 +392,7 @@ def do_edit
   comment = <<"EOF"
 
 Format:
- command: args
+ command args
 
     Indented lines form a comment for certain commands.
     For other commands these are ignored.
