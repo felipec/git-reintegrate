@@ -403,6 +403,11 @@ Commands:
 		instruction list should begin with a "base" command.
  merge		Merges the specified branch.  Extended comment lines are
 		added to the commit message for the merge.
+ fixup		Picks up an existing commit to be applied on top of a merge as
+		a fixup.
+ commit		Adds an empty commit with the specified message mostly to be
+		used as a comment.
+ pause		Pauses the rebuild process.
  .		The command is ignored.
 EOF
   File.write(edit_file, content + "\n" + comment.gsub(/^/, '# \1'))
