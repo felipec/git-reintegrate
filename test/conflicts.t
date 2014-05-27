@@ -11,18 +11,6 @@ test_description='Test git reintegrage branches with no conflicts'
 
 . ./test-lib.sh
 
-commit_file() {
-	local filename="$1"
-	echo "$2" > $filename &&
-	git add -f $filename &&
-	git commit -q -m "commit $filename"
-}
-
-write_script() {
-	cat > "$1" &&
-	chmod +x "$1"
-}
-
 test_expect_success 'setup branches' '
 	git init -q &&
 	commit_file base base &&

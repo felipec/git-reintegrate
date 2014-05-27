@@ -10,13 +10,6 @@ test_description='Test git reintegrage apply option'
 
 . ./test-lib.sh
 
-commit_file() {
-	local filename="$1"
-	echo "$2" > $filename &&
-	git add -f $filename &&
-	git commit -q -m "commit $filename"
-}
-
 test_expect_success 'setup branches' '
 	git init -q &&
 	commit_file base base &&
