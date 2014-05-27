@@ -383,12 +383,13 @@ end
 
 def do_edit
   edit_file = "#{$git_dir}/GIT-INTEGRATION"
+  comment_char = '#'
 
   content = $branch.read_instructions
   if not $branches_to_add.empty?
     content += "\n" + $branches_to_add.map { |e| "merge #{e}" }.join("\n") + "\n"
   end
-  comment = <<EOF
+  comment = <<"EOF"
 
 Format:
  command: args
@@ -396,7 +397,7 @@ Format:
     Indented lines form a comment for certain commands.
     For other commands these are ignored.
 
-Lines beginning with $comment_char are stripped.
+Lines beginning with #{comment_char} are stripped.
 
 Commands:
  base           Resets the branch to the specified state.  Every integration
@@ -410,13 +411,13 @@ Commands:
  pause          Pauses the rebuild process.
  .              The command is ignored.
 EOF
-  File.write(edit_file, content + "\n" + comment.gsub(/^/, '# \1'))
+  File.write(edit_file, content + "\n" + comment.gsub(/^/, "#{comment_char} \\1"))
 
   if $edit
     git_editor(edit_file) || die
   end
 
-  content = File.read(edit_file).gsub(/^# .*?\n/m, '')
+  content = File.read(edit_file).gsub(/^#{comment_char} .*?\n/m, '')
 
   $branch.write_instructions(content)
 end
