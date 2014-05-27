@@ -1,4 +1,4 @@
-= git-reintegration =
+= git-reintegrate =
 
 This tool helps to manage integration branches.
 
