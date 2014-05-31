@@ -1,6 +1,9 @@
 prefix := $(HOME)
 
-all:
+bindir := $(prefix)/bin
+mandir := $(prefix)/share/man/man1
+
+all: doc
 
 doc: doc/git-reintegrate.1
 
@@ -10,14 +13,17 @@ test:
 doc/git-reintegrate.1: doc/git-reintegrate.txt
 	a2x -d manpage -f manpage $<
 
+clean:
+	$(RM) doc/git-reintegrate.1
+
 D = $(DESTDIR)
 
 install:
-	install -D -m 755 git-reintegrate \
-		$(D)$(prefix)/bin/git-reintegrate
+	install -d -m 755 $(D)$(bindir)/
+	install -m 755 git-reintegrate $(D)$(bindir)/git-reintegrate
 
 install-doc: doc
-	install -D -m 644 doc/git-reintegrate.1 \
-		$(D)$(prefix)/share/man/man1/git-reintegrate.1
+	install -d -m 755 $(D)$(mandir)/
+	install -m 644 doc/git-reintegrate.1 $(D)$(mandir)/git-reintegrate.1
 
-.PHONY: all test
+.PHONY: all test install install-doc clean
