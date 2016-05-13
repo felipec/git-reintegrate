@@ -693,6 +693,9 @@ $autocontinue = true
 
 opts.parse
 
+$git_cdup = %x[git rev-parse --show-cdup].chomp
+die "You need to run this command from the toplevel of the working tree." unless $git_cdup.empty?
+
 $git_dir = %x[git rev-parse --git-dir].chomp
 
 $state_dir = "#{$git_dir}/integration"
