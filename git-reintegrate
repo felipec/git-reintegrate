@@ -389,7 +389,7 @@ def do_edit
   if not $branches_to_add.empty?
     content += "\n" + $branches_to_add.map { |e| "merge #{e}" }.join("\n") + "\n"
   end
-  comment = <<EOF
+  comment = <<"EOF"
 
 Format:
  command args
