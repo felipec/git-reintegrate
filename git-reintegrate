@@ -338,7 +338,7 @@ class Integration
   def finalize_command(cmd, args, message)
     begin
       fun = @@map[cmd] || "cmd_#{cmd}".to_sym
-      send(fun, message, *args)
+      send(fun, message, *args.split(' '))
     rescue NoMethodError
       raise Integration::Stop, "Unknown command: #{cmd}"
     end
@@ -559,7 +559,7 @@ def do_apply
   inst = inst.lines.reject do |line|
     next true if line =~ /^base /
     if line =~ /^merge (.*)$/
-      system(*%W[git merge-base --is-ancestor #{$1} HEAD])
+      system(*%W[git merge-base --is-ancestor #{$1.split(' ')[0]} HEAD])
       next true if $?.success?
     end
     false
@@ -621,7 +621,7 @@ def do_status
     when 'base'
       $status_base = args
     when 'merge'
-      status_merge(*args)
+      status_merge(*args.split(' ')[0])
     when '.'
       status_dot(*args)
     else
