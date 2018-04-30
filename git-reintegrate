@@ -582,7 +582,7 @@ def status_merge(branch_to_merge = nil, *args)
   elsif system(*%w[git merge-base --is-ancestor], branch_to_merge, $status_base)
     state = "+"
     verbose_state = "merged to #{$status_base}"
-  elsif system(*%w[git-merge-base --is-ancestor], branch_to_merge, $branch.name)
+  elsif system(*%w[git merge-base --is-ancestor], branch_to_merge, $branch.name)
     state = "*"
     verbose_state = "up-to-date"
   else
