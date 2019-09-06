@@ -345,7 +345,7 @@ class Integration
   end
 
   def finish
-    system(*%w[git update-ref], $branch.into_ref, 'HEAD', File.read($start_file))
+    system(*%w[git update-ref], "-m", "reintegrated #{$branch.name}", $branch.into_ref, 'HEAD', File.read($start_file))
     system(*%w[git symbolic-ref], 'HEAD', $branch.into_ref)
     FileUtils.rm_rf($state_dir)
     system(*%w[git gc --auto])
@@ -423,7 +423,7 @@ EOF
 end
 
 def cmd_base(message, base)
-  puts "Resetting to base #{base}..."
+  puts "* Resetting to base #{base}..."
   system(*%w[git reset --quiet --hard], base)
   raise Integration::Stop, "Failed to reset to base #{base}" unless $?.success?
 end
@@ -442,7 +442,7 @@ def cmd_merge(message, branch_to_merge, *args)
   merge_opts += %w[--quiet --no-ff]
   merge_opts += ['-m', merge_msg]
 
-  puts "Merging branch #{branch_to_merge}..."
+  puts "* Merging branch #{branch_to_merge}..."
   system(*%w[git merge], *merge_opts, branch_to_merge)
   if not $?.success?
     if $autocontinue && %x[git rerere remaining].chomp == ''
@@ -456,7 +456,7 @@ def cmd_merge(message, branch_to_merge, *args)
 end
 
 def cmd_fixup(message, fixup_commit, *args)
-  puts "Fixing up with #{fixup_commit}"
+  puts "* Fixing up with #{fixup_commit}"
 
   system(*%w[git cherry-pick --no-commit], fixup_commit) &&
   system({ 'EDITOR' => ':' }, *%w[git commit --amend -a])
@@ -464,7 +464,7 @@ def cmd_fixup(message, fixup_commit, *args)
 end
 
 def cmd_commit(message, *args)
-  puts "Emtpy commit"
+  puts "* Emtpy commit"
 
   system(*%w[git commit --allow-empty -m], message)
   raise Integration::Stop, '' unless $?.success?
