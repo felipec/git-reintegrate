@@ -285,7 +285,8 @@ class Integration
         msg << $1
       when /(\S+) ?(.*)$/
         cmds << [cmd, args, msg] if cmd
-        cmd, args = [$1, $2]
+        cmd = $1
+        args = $2.split(' ')
         msg = ""
       end
     end
@@ -359,7 +360,7 @@ class Integration
   def stop(msg = nil)
     File.open($insns, 'w') do |f|
       @commands.each do |cmd, args, msg|
-        str = "%s %s\n" % [cmd, args]
+        str = "%s %s\n" % [cmd, args.join(' ')]
         str += "%s\n" % msg if msg and not msg.empty?
         f.write(str)
       end
@@ -558,7 +559,7 @@ def do_apply
 
   inst = inst.lines.reject do |line|
     next true if line =~ /^base /
-    if line =~ /^merge (.*)$/
+    if line =~ /^merge (\S+)/
       system(*%W[git merge-base --is-ancestor #{$1} HEAD])
       next true if $?.success?
     end
@@ -568,7 +569,7 @@ def do_apply
   Integration.start(head, head, inst)
 end
 
-def status_merge(branch_to_merge = nil)
+def status_merge(branch_to_merge = nil, *args)
   if not branch_to_merge
     $stderr.puts "no branch specified with 'merge' command"
     return
@@ -598,9 +599,7 @@ def status_merge(branch_to_merge = nil)
 end
 
 def status_dot(*args)
-  args.each do |arg|
-    puts ". #{arg}\n"
-  end
+  puts ". %s\n" % args.join(' ')
   puts $message.gsub(/^./, '     \&') if $message
 end
 
@@ -613,13 +612,13 @@ def do_status
 
   $longest_branch = cmds.map do |cmd, args, msg|
     next 0 if cmd != 'merge'
-    args.split(' ').first.size
+    args.first.size
   end.max
 
   cmds.each do |cmd, args, msg|
     case cmd
     when 'base'
-      $status_base = args
+      $status_base = args.first
     when 'merge'
       status_merge(*args)
     when '.'
