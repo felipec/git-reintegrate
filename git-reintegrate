@@ -346,8 +346,9 @@ class Integration
   end
 
   def finish
-    system(*%w[git update-ref], "-m", "reintegrated #{$branch.name}", $branch.into_ref, 'HEAD', File.read($start_file))
-    system(*%w[git symbolic-ref], 'HEAD', $branch.into_ref)
+    msg = "reintegrate: rebuilt #{$branch.name}"
+    system(*%w[git update-ref], '-m', msg, $branch.into_ref, 'HEAD', File.read($start_file))
+    system(*%w[git symbolic-ref], '-m', msg, 'HEAD', $branch.into_ref)
     FileUtils.rm_rf($state_dir)
     system(*%w[git gc --auto])
     if $branch.name == $branch.into_name
