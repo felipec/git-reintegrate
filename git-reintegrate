@@ -142,9 +142,13 @@ class Branch
       @ref = %x[git rev-parse --symbolic-full-name "refs/heads/#{@name}"].chomp
       die "no such branch: #{@name}" unless $?.success?
     else
-      @ref = %x[git symbolic-ref HEAD].chomp
-      die "HEAD is detached, could not figure out which integration branch to use" unless $?.success?
-      @name = @ref.gsub(%r{^refs/heads/}, '')
+      if test('f', $head_file)
+        @name = File.read($head_file)
+      else
+        @ref = %x[git symbolic-ref HEAD].chomp
+        die "HEAD is detached, could not figure out which integration branch to use" unless $?.success?
+        @name = @ref.gsub(%r{^refs/heads/}, '')
+      end
     end
 
     @int = 'refs/int/' + @name
