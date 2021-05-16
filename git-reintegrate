@@ -147,7 +147,7 @@ class Branch
       @name = @ref.gsub(%r{^refs/heads/}, '')
     end
 
-    @int = @ref.gsub(%r{^refs/heads/}, 'refs/int/')
+    @int = 'refs/int/' + @name
 
     system(*%w[git rev-parse --quiet --verify], @int, :out => File::NULL)
     die "Not an integration branch: #{@name}" unless $?.success?
