@@ -320,6 +320,8 @@ class Integration
     $branch.into_name = into_name
     File.write($into_file, into_name)
 
+    File.write($autocontinue_file, $autocontinue)
+
     File.write($insns, inst)
     self.run(inst)
   end
@@ -523,6 +525,7 @@ def get_head_file
   branch = Branch.new(branch_name)
   branch.get
   branch.into_name = File.read($into_file)
+  $autocontinue = File.read($autocontinue_file) == 'true'
   return branch
 end
 
@@ -708,6 +711,7 @@ $head_file = "#{$state_dir}/head-name"
 $merged_file = "#{$state_dir}/merged"
 $insns = "#{$state_dir}/instructions"
 $into_file = "#{$state_dir}/into"
+$autocontinue_file = "#{$state_dir}/autocontinue"
 
 case $actions.first
 when :continue
