@@ -170,7 +170,7 @@ class Branch
 
     @int = @ref.gsub(%r{^refs/heads/}, 'refs/int/')
 
-    system(*%w[git update-ref], @ref, base, NULL_SHA1)
+    system(*%w[git update-ref], @ref, "#{base}^{commit}", NULL_SHA1)
     write_instructions("base #{base}\n")
     system(*%w[git checkout], @name)
     puts "Integration branch #{@name} created."
