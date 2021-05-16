@@ -736,6 +736,10 @@ if $delete
   exit
 end
 
+unless $cat || $status
+  die "integration already in progress" if test('f', $head_file)
+end
+
 $branches_to_add.each do |branch|
   system(*%w[git rev-parse --quiet --verify], "#{branch}^{commit}", :out => File::NULL)
   die "not a valid commit: #{branch}" unless $?.success?
