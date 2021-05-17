@@ -18,14 +18,6 @@ $prefix = nil
 
 NULL_SHA1 = '0' * 40
 
-if RUBY_VERSION < '2.5'
-  class String
-    def delete_prefix(prefix)
-      self.slice(prefix.length..-1)
-    end
-  end
-end
-
 def die(*args)
   fmt = args.shift
   $stderr.printf("fatal: %s\n" % fmt, *args)
