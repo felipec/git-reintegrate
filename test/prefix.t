@@ -14,18 +14,6 @@ test_description="Test git reintegrate prefix support"
 prefix="sub/"
 git config --global integration.prefix $prefix
 
-commit_file() {
-	local filename="$1"
-	echo "$2" > $filename &&
-	git add -f $filename &&
-	git commit -q -m "commit $filename"
-}
-
-write_script() {
-	cat > "$1" &&
-	chmod +x "$1"
-}
-
 test_expect_success 'setup' '
 	git init -q &&
 	commit_file base base &&
