@@ -9,7 +9,7 @@
 
 test_description="Test git reintegrate prefix support"
 
-. ./sharness.sh
+. ./test-lib.sh
 
 prefix="sub/"
 git config --global integration.prefix $prefix
