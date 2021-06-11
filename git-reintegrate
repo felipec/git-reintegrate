@@ -455,11 +455,13 @@ def cmd_merge(message, branch_to_merge, *args)
   merge_opts += %w[--quiet --no-ff]
   merge_opts += ['-m', merge_msg]
 
+  merge_opts << '--rerere-autoupdate' if $autocontinue
+
   puts "Merging branch #{branch_to_merge}..."
   system(*%w[git merge], *merge_opts, branch_to_merge)
   if not $?.success?
     if $autocontinue && %x[git rerere remaining].chomp == ''
-      system(*%w[git commit --no-edit --no-verify -a])
+      system(*%w[git merge --continue])
       raise Integration::Stop, '' unless $?.success?
     else
       raise Integration::Stop, ''
