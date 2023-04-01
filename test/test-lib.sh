@@ -9,6 +9,8 @@ GIT_COMMITTER_NAME='C O Mitter'
 export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
 
+unset GIT_EDITOR
+
 commit_file() {
 	local filename="$1"
 	echo "$2" > $filename &&
