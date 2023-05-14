@@ -8,7 +8,7 @@ all: doc
 doc: doc/git-reintegrate.1
 
 test:
-	$(MAKE) -C test
+	$(MAKE) -C t
 
 doc/git-reintegrate.1: doc/git-reintegrate.txt
 	asciidoctor -b manpage $<
