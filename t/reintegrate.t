@@ -9,7 +9,7 @@
 
 test_description="Test git reintegrate"
 
-. ./test-lib.sh
+. "$(dirname "$0")"/test-lib.sh
 
 test_expect_success 'setup branches' '
 	git init -q &&

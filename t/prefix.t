@@ -9,7 +9,7 @@
 
 test_description="Test git reintegrate prefix support"
 
-. ./test-lib.sh
+. "$(dirname "$0")"/test-lib.sh
 
 prefix="sub/"
 git config --global integration.prefix $prefix
