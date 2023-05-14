@@ -11,7 +11,7 @@ test:
 	$(MAKE) -C test
 
 doc/git-reintegrate.1: doc/git-reintegrate.txt
-	a2x -d manpage -f manpage $<
+	asciidoctor -b manpage $<
 
 clean:
 	$(RM) doc/git-reintegrate.1
