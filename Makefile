@@ -26,4 +26,4 @@ install-doc: doc
 	install -d -m 755 $(D)$(mandir)/
 	install -m 644 doc/git-reintegrate.1 $(D)$(mandir)/git-reintegrate.1
 
-.PHONY: all test install install-doc clean
+.PHONY: all doc test install install-doc clean
